@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimpleIntegratedMultimediaProcessor.Settings;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -64,8 +65,8 @@ namespace SimpleIntegratedMultimediaProcessor.Download
                 }
 
                 //later -- -r=rate limit
-                //youtubedlProc.StartInfo.FileName = $"youtube-dl.exe";
-                youtubedlProc.StartInfo.FileName = $"yt-dlp.exe";
+                var set = new SettingsModel();
+                youtubedlProc.StartInfo.FileName = set.DownloadProgram;
                 youtubedlProc.StartInfo.Arguments = sb.ToString();
                 youtubedlProc.StartInfo.CreateNoWindow = true;
 

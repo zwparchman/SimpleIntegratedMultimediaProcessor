@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimpleIntegratedMultimediaProcessor.Settings;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -124,7 +125,8 @@ namespace SimpleIntegratedMultimediaProcessor.Convert
                 sb.Append($"{EndFile} ");
 
                 //later -- -r=rate limit
-                ffmpegProc.StartInfo.FileName = $"ffmpeg.exe";
+                var set = new SettingsModel();
+                ffmpegProc.StartInfo.FileName = set.FFMpegPath;
                 ffmpegProc.StartInfo.Arguments = sb.ToString();
                 ffmpegProc.StartInfo.CreateNoWindow = true;
                 ffmpegProc.StartInfo.RedirectStandardOutput = true;

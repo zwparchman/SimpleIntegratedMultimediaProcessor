@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimpleIntegratedMultimediaProcessor.Settings;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -124,7 +125,8 @@ namespace SimpleIntegratedMultimediaProcessor.Split
 
                     try
                     {
-                        fproc.StartInfo.FileName = "ffmpeg.exe";
+                        var set = new SettingsModel();
+                        fproc.StartInfo.FileName = set.FFMpegPath;
                         fproc.StartInfo.Arguments = args;
                         fproc.StartInfo.RedirectStandardError = true;
                         fproc.StartInfo.RedirectStandardOutput = true;
