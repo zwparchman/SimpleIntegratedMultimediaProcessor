@@ -1,0 +1,49 @@
+﻿<UserControl x:Class="SimpleIntegratedMultimediaProcessor.Convert.ConvertFormat"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SimpleIntegratedMultimediaProcessor.Convert"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <StackPanel>
+            <DockPanel>
+                <Label>Starting File</Label>
+                <Button Click="OpenBrowse_Click">Browse</Button>
+                <TextBox Text="{Binding StartFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
+
+            <DockPanel>
+                <Label>Ending File</Label>
+                <Button Click="SaveBrowse_Click">Browse</Button>
+                <TextBox Text="{Binding EndFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <Button Click="Convert_Click">Convert File</Button>
+                <Button 
+                    Click="Abort_Click" 
+                    IsEnabled="{Binding Converting, UpdateSourceTrigger=PropertyChanged}">
+                    Abort Conversion
+                </Button>
+            </StackPanel>
+
+            <DockPanel>
+                <Label>TwitterVideo</Label>
+                <CheckBox 
+                    VerticalAlignment="Center"
+                    IsChecked="{Binding TwitterVideo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
+
+            <DockPanel >
+                <Label>Extra Options</Label>
+                <TextBox 
+                    IsReadOnly="{Binding ReadOnlyOptions, UpdateSourceTrigger=PropertyChanged}"
+                    Text="{Binding ExtraOptions, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
+
+            <TextBlock Text="{Binding Error, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

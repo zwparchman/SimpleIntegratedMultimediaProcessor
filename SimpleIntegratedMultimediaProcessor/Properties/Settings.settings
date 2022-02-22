@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="SimpleIntegratedMultimediaProcessor.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DownloadProgram" Type="System.String" Scope="User">
+      <Value Profile="(Default)">yt-dlp.exe</Value>
+    </Setting>
+    <Setting Name="FFmpegPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">ffmpeg.exe</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
