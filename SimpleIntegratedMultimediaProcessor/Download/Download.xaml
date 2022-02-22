@@ -9,13 +9,29 @@
     <Grid>
 
         <StackPanel>
+            <StackPanel.Resources>
+                <Style TargetType="Label">
+                    <Setter Property="Width" Value="250" />
+                    <Setter Property="HorizontalContentAlignment" Value="Right" />
+                </Style>
+                <Style TargetType="CheckBox">
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                </Style>
+                <Style TargetType="TextBox">
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                </Style>
+            </StackPanel.Resources>
             <DockPanel >
                 <Label>Download URL</Label>
-                <Button Click="DownloadBrowse_Click">Browse</Button>
                 <TextBox Text="{Binding URL, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
+            <DockPanel>
+                <Label>Use Default Name (output to directory)</Label>
+                <CheckBox IsChecked="{Binding UseDefaultFileName, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
             <DockPanel >
-                <Label>Download Location</Label>
+                <Label Content="{Binding DownloadPrompt, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Click="DownloadBrowse_Click">Browse</Button>
                 <TextBox Text="{Binding DownloadPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
 

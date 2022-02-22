@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,9 +35,9 @@ namespace SimpleIntegratedMultimediaProcessor.Download
 
         private void DownloadBrowse_Click(object sender, RoutedEventArgs e)
         {
-            var bb = new SaveFileDialog();
-            bool? res = bb.ShowDialog();
-            bb.Title = "Select ending file";
+            var bb = new CommonOpenFileDialog();
+            bb.IsFolderPicker = Model.UseDefaultFileName;
+            bool res = bb.ShowDialog() == CommonFileDialogResult.Ok;
 
             if(res == true)
             {

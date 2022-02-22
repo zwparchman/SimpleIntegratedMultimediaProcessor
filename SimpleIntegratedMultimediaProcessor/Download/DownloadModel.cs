@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -51,15 +52,58 @@ namespace SimpleIntegratedMultimediaProcessor.Download
             set { _error = value; NotifyPropertyChanged(); }
         }
 
+
+        bool _useDefaultFileName;
+        public bool UseDefaultFileName {
+            get { return _useDefaultFileName; }
+            set { _useDefaultFileName = value; NotifyPropertyChanged(); NotifyPropertyChanged(nameof(DownloadPrompt)); }
+        }
+
+        public string DownloadPrompt
+        {
+            get
+            {
+                if (UseDefaultFileName)
+                {
+                    return "Output Directory";
+                }
+                else
+                {
+                    return "Output Path";
+                }
+            }
+        }
+
         Process youtubedlProc;
 
         public async void DoDownload()
         {
             using (youtubedlProc = new Process())
             {
+                if (string.IsNullOrEmpty(DownloadPath))
+                {
+                    Error = "Output Location required";
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(URL))
+                {
+                    Error = "URL is required";
+                    return;
+                }
+
                 var sb = new StringBuilder();
                 sb.Append(URL + " ");
-                if (!string.IsNullOrEmpty(DownloadPath))
+                if (UseDefaultFileName)
+                {
+                    if (!Directory.Exists(DownloadPath))
+                    {
+                        Error = "Output location is not a directory";
+                        return;
+                    }
+                    youtubedlProc.StartInfo.WorkingDirectory = DownloadPath;
+                }
+                else
                 {
                     sb.Append($"-o {DownloadPath}");
                 }
