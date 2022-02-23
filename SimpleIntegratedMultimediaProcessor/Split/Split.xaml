@@ -27,22 +27,30 @@
             <DockPanel DockPanel.Dock="Top">
                 <Label>Starting File</Label>
                 <Button Click="StartingFile_Click">Browse</Button>
-                <TextBox Text="{Binding StartFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox 
+                    VerticalContentAlignment="Center"
+                    Text="{Binding StartFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
             <DockPanel DockPanel.Dock="Top" >
                 <Label>Output Directory</Label>
                 <Button Click="OutputDirectory_Click">Browse</Button>
-                <TextBox Text="{Binding OutputDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox 
+                    VerticalContentAlignment="Center"
+                    Text="{Binding OutputDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
 
+            <!--
             <DockPanel DockPanel.Dock="Top" >
                 <Label>Output Extension</Label>
                 <TextBox Text="{Binding OutputExtension, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
+            -->
 
             <DockPanel DockPanel.Dock="Top" >
                 <Label>Max Threads</Label>
-                <TextBox Text="{Binding MaxThreadsString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox 
+                    VerticalContentAlignment="Center"
+                    Text="{Binding MaxThreadsString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
 
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom">

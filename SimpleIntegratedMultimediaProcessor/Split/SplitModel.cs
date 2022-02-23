@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleIntegratedMultimediaProcessor.Split
@@ -16,6 +17,11 @@ namespace SimpleIntegratedMultimediaProcessor.Split
     public class SplitModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public SplitModel()
+        {
+            RegenerateOutput();
+        }
 
         void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
         {
@@ -33,8 +39,15 @@ namespace SimpleIntegratedMultimediaProcessor.Split
         string _outputExtension;
         public string OutputExtension
         {
-            get { return _outputExtension; }
-            set { _outputExtension = value; NotifyPropertyChanged(); }
+            get 
+            { 
+                return _outputExtension; 
+            }
+            set 
+            {
+                _outputExtension = value;
+                NotifyPropertyChanged();
+            }
         }
 
         string _maxThreadsString = "8";
@@ -53,7 +66,7 @@ namespace SimpleIntegratedMultimediaProcessor.Split
                 {
                     maxThreads = 1;
                 }
-                maxThreads = Math.Min(1, maxThreads);
+                maxThreads = Math.Max(1, maxThreads);
 
                 return maxThreads;
             }
@@ -66,12 +79,24 @@ namespace SimpleIntegratedMultimediaProcessor.Split
             set { _output = value; NotifyPropertyChanged(); }
         }
 
-
         string _startFile;
         public string StartFile
         {
             get { return _startFile; }
-            set { _startFile = value; NotifyPropertyChanged(); }
+            set { 
+                _startFile = value;
+                NotifyPropertyChanged();
+
+                if (File.Exists(_startFile))
+                {
+                    int rind = _startFile.LastIndexOf('.');
+                    if(rind != -1)
+                    {
+                        rind += 1;
+                        OutputExtension = _startFile.Substring(rind);
+                    }
+                }
+            }
         }
 
         bool _splitting;
@@ -90,71 +115,81 @@ namespace SimpleIntegratedMultimediaProcessor.Split
 
         ConcurrentQueue<SplitRow> _splittingQueue = new ConcurrentQueue<SplitRow>();
 
-        List<Task> _splittingTasks = new List<Task>();
 
         ConcurrentQueue<string> _errors = new ConcurrentQueue<string>();
 
-        void SplitTask()
+        void SplitTask( SplitRow row )
         {
             var outDir = OutputDirectory;
             var inFile = StartFile;
             var ext = OutputExtension;
 
-            SplitRow row;
+            if (!row.Valid) return;
 
-            while (_splittingQueue.TryDequeue(out row))
+            using (var fproc = new Process())
             {
-                if (!row.Valid) continue;
+                string outputFile = Path.Combine(outDir, row.Title + "." + ext);
 
-                using (var fproc = new Process())
+                inFile = inFile.Replace("\"", "\\\"");
+                outputFile = outputFile.Replace("\"", "\\\"");
+
+                string args;
+                if (row.EndSeconds >= 0)
                 {
-                    string outputFile = Path.Combine(outDir, row.Title + "." + ext);
+                    int duration = row.EndSeconds - row.StartSeconds;
+                    args  = $"-i \"{inFile}\" -ss {row.StartSeconds} -t {duration} \"{outputFile}\"";
+                }
+                else
+                {
+                    args  = $"-i \"{inFile}\" -ss {row.StartSeconds} \"{outputFile}\"";
+                }
 
-                    inFile = inFile.Replace("\"", "\\\"");
-                    outputFile = outputFile.Replace("\"", "\\\"");
+                if (File.Exists(outputFile))
+                {
+                    File.Delete(outputFile);
+                }
 
-                    string args;
-                    if (row.EndSeconds >= 0)
+                try
+                {
+                    var set = new SettingsModel();
+                    fproc.StartInfo.FileName = set.FFMpegPath;
+                    fproc.StartInfo.Arguments = args;
+                    fproc.StartInfo.RedirectStandardError = true;
+                    fproc.StartInfo.RedirectStandardOutput = true;
+                    fproc.StartInfo.RedirectStandardInput = true;
+                    fproc.StartInfo.UseShellExecute = false;
+                    fproc.Start();
+
+                    fproc.StandardInput.Close();
+
+                    fproc.WaitForExit();
+                    if(fproc.ExitCode != 0)
                     {
-                        args  = $"-i \"{inFile}\" -ss {row.StartSeconds} -t {row.EndSeconds} -y \"{outputFile}\"";
+                        string er, ot;
+
+                        ot = fproc.StandardOutput.ReadToEnd();
+                        er = fproc.StandardError.ReadToEnd();
+
+                        _errors.Enqueue($"While working on [{row.Title}] a status of [{fproc.ExitCode}] was returned. StdErr [{er}] StdOut [{ot}]");
                     }
                     else
                     {
-                        args  = $"-i \"{inFile}\" -ss {row.StartSeconds} -y \"{outputFile}\"";
+                        _errors.Enqueue($"Finished [{row.Title}]");
                     }
-
-                    try
-                    {
-                        var set = new SettingsModel();
-                        fproc.StartInfo.FileName = set.FFMpegPath;
-                        fproc.StartInfo.Arguments = args;
-                        fproc.StartInfo.RedirectStandardError = true;
-                        fproc.StartInfo.RedirectStandardOutput = true;
-                        fproc.StartInfo.UseShellExecute = false;
-                        fproc.Start();
-
-                        fproc.WaitForExit();
-                        if(fproc.ExitCode != 0)
-                        {
-                            string er, ot;
-
-                            ot = fproc.StandardOutput.ReadToEnd();
-                            er = fproc.StandardError.ReadToEnd();
-
-                            _errors.Enqueue($"While working on [{row.Title}] a status of [{fproc.ExitCode}] was returned. StdErr [{er}] StdOut [{ot}]");
-                        }
-                        else
-                        {
-                            _errors.Enqueue($"Finished [{row.Title}]");
-                        }
-                    }
-                    catch(Exception ex)
-                    {
-                        _errors.Enqueue($"While working on [{row.Title}]\n{ex.ToString()}");
-                    }
+                }
+                catch(Exception ex)
+                {
+                    _errors.Enqueue($"While working on [{row.Title}]\n{ex}");
+                    fproc.Kill();
+                    throw;
+                }
+                finally
+                {
+                    fproc.Dispose();
                 }
             }
         }
+
 
         internal async void StartSplitting()
         {
@@ -178,17 +213,23 @@ namespace SimpleIntegratedMultimediaProcessor.Split
 
             Output.ToList().ForEach(_splittingQueue.Enqueue);
 
-            for (int i = 0; i < MaxThreads; i++) {
-                _splittingTasks.Add(Task.Run(SplitTask));
-            }
-
+            Semaphore sem = new Semaphore(MaxThreads, MaxThreads);
             await Task.Run(() =>
             {
-                while( _splittingTasks.Count != 0)
-                {
-                    _splittingTasks[0].Wait();
-                    _splittingTasks.RemoveAt(0);
-                }
+                Output.
+                    ToList()
+                    .AsParallel()
+                    .ForAll((row) => {
+                        sem.WaitOne();
+                        try
+                        {
+                            SplitTask(row);
+                        }
+                        finally
+                        {
+                            sem.Release();
+                        }
+                });
             });
 
             string err;
@@ -208,7 +249,12 @@ namespace SimpleIntegratedMultimediaProcessor.Split
 
         }
 
-        string _inputText;
+        string _inputText = @"
+00:00 this is an example
+# this is a comment that does not get parsed
+3:3 this is the second track start time
+3:33 this is 30 seconds after the start of the second track.
+";
         public string InputText
         {
             get { return _inputText; }
@@ -245,6 +291,7 @@ namespace SimpleIntegratedMultimediaProcessor.Split
                     .Where(x => !x.StartsWith("#"));
 
 
+                var invalidChars = new HashSet<char>(Path.GetInvalidPathChars());
                 var last = new SplitRow();
                 foreach(var str in stringData)
                 {
@@ -256,6 +303,8 @@ namespace SimpleIntegratedMultimediaProcessor.Split
                     if (parts.Length < 2) continue;
 
                     endSeconds = TimeToSeconds(parts[0]);
+                    sr.Title = parts[1];
+
                     if (endSeconds < 0)
                     {
                         endSeconds = startSeconds;
@@ -264,10 +313,15 @@ namespace SimpleIntegratedMultimediaProcessor.Split
                     else
                     {
                         last.EndSeconds = endSeconds;
-                        sr.Valid = true;
+
+                        var titleChars = new HashSet<char>(sr.Title);
+
+                        bool badChars = invalidChars
+                            .Any((c) => titleChars.Contains(c));
+
+                        sr.Valid = !badChars;
                     }
 
-                    sr.Title = parts[1];
                     sr.StartSeconds = last.EndSeconds;
                     sr.EndSeconds = -1;
                     startSeconds = endSeconds;
@@ -284,7 +338,7 @@ namespace SimpleIntegratedMultimediaProcessor.Split
                 {
                     Output.Add(newRows[i]);
                 } 
-                else if(i <= newRows.Count)
+                else if(i < newRows.Count)
                 {
                     Output[i].StartSeconds = newRows[i].StartSeconds;
                     Output[i].EndSeconds = newRows[i].EndSeconds;
